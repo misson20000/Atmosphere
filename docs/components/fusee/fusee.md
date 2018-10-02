@@ -17,4 +17,4 @@ Fusée-secondary is a payload file that stays on the root of the Switch’s SD C
 
 Fusée-secondary contains various [.kip modules](../docs/main.md#modules). These modules modify existing features in the OS, and can also add new ones.
 
-Fusée is also capable of chainloading other environments such as Linux.
+Fusée is also capable of chainloading other payloads such as Linux.
