@@ -6,7 +6,7 @@ The components of Atmosphère are:
 + [Exosphère](../docs/components/exosphere.md), a fully-featured custom secure monitor.
 + [Stratosphère](../docs/components/stratosphere.md), a set of custom system modules
 + [Troposphère](../docs/components/troposphere.md), Application-level patches to the Horizon OS. This component has not been implemented yet.
-+ [Thermosphère](../docs/components/thermosphere.md), a hypervisor-based emuNAND implementation.
++ [Thermosphère](../docs/components/thermosphere.md), a hypervisor-based emuNAND implementation. This component has also not been implemented yet.
 
 ### Modules
 The Stratosphère component of Atmosphère contains various modules. These have a `.kip` extension. They provide custom features, extend existing features, or replace Nintendo sysmodules.
