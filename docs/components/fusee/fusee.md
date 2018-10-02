@@ -15,6 +15,6 @@ Fusée-primary can be configured via the [BCT.ini](../fusee/BCT.md) file located
 ## Fusée-Secondary
 Fusée-secondary is a payload file that stays on the root of the Switch’s SD Card (fusee-secondary.bin). It is automatically launched once fusée-primary has finished, and is responsible for preparing the Switch’s hardware for future running environments, such as the homebrew menu. Fusée-secondary is also responsible for validating and launching Exosphère.
 
-Fusée-secondary contains various [.kip modules](../docs/main.md#modules). These modules modify existing features in the OS, and can also add new ones.
+Fusée-secondary contains various [.kip modules](../main.md#modules). These modules modify existing features in the OS, and can also add new ones.
 
 Fusée is also capable of chainloading other payloads such as Linux.
