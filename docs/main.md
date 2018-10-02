@@ -5,13 +5,13 @@ The components of Atmosphère are:
 + [Fusée](../docs/components/fusee.md), a custom bootloader.
 + [Exosphère](../docs/components/exosphere.md), a fully-featured custom secure monitor.
 + [Stratosphère](../docs/components/stratosphere.md), a set of custom system modules
-+ [Troposphère](../docs/components/troposphere.md), Application-level patches to the Horizon OS. This has not been implemented yet.
++ [Troposphère](../docs/components/troposphere.md), Application-level patches to the Horizon OS. This component has not been implemented yet.
 + [Thermosphère](../docs/components/thermosphere.md), a hypervisor-based emuNAND implementation.
 
 ### Modules
-Atmosphère also includes some modules. These have a `.kip` extension. They provide custom features, extend existing features, or replace Nintendo sysmodules.
+The Stratosphère component of Atmosphère contains various modules. These have a `.kip` extension. They provide custom features, extend existing features, or replace Nintendo sysmodules.
 
-Atmosphère's modules include:
+Stratosphère's modules include:
 + [boot](../docs/modules/boot.md)
 + [creport](../docs/modules/creport.md)
 + [fs_mitm](../docs/modules/fs_mitm.md)
