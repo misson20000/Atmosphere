@@ -10,11 +10,11 @@ Additionally, a hardware revision of the Switch known as “Mariko” is believe
 ## Fusée-Primary
 Fusée-primary is the payload file (fusee-primary.bin) sent to the Switch from an external device. Once sent, fusée-primary makes initial preparations before loading fusée-secondary from the Switch’s SD Card.
 
-Fusée-primary can be configured via the [BCT.ini](https://github.com/joelc608/Atmosphere/blob/master/docs/components/fusee/BCT.md) file located on the Switch’s SD card.
+Fusée-primary can be configured via the [BCT.ini](../docs/components/fusee/BCT.md) file located on the Switch’s SD card.
 
 ## Fusée-Secondary
 Fusée-secondary is a payload file that stays on the root of the Switch’s SD Card (fusee-secondary.bin). It is automatically launched once fusée-primary has finished, and is responsible for preparing the Switch’s hardware for future running environments, such as the homebrew menu. Fusée-secondary is also responsible for validating and launching Exosphère.
 
-Fusée-secondary contains various [.kip modules](https://github.com/joelc608/Atmosphere/tree/master/docs/modules). These modules modify existing features in the OS, and can also add new ones.
+Fusée-secondary contains various [.kip modules](../docs/main.md#modules). These modules modify existing features in the OS, and can also add new ones.
 
 Fusée is also capable of chainloading other environments such as Linux.
