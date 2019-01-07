@@ -97,6 +97,7 @@ struct FatalCpuContext {
 };
 
 struct FatalThrowContext {
+    u64 pid;
     u32 error_code;
     bool is_creport;
     bool has_gprs[NumAarch64Gprs];
