@@ -25,7 +25,7 @@ RSpec.describe "sm" do
     connect
   end
 
-  it "responds to ipc messages" do
+  it "responds to Initialize" do
     session = connect
     session.send_message_sync(
       kernel,
@@ -35,15 +35,31 @@ RSpec.describe "sm" do
     end
   end
 
-  it "does not reply to GetService for a service that has not been registered" do
-    session = connect
-    session.send_message(
-      Lakebed::CMIF::Message.build_rq(1) do
-        u64("fsp-srv\x00".unpack("Q<")[0])
-      end) do
-      fail "should not reply..."
+  describe "without initialization" do
+    if StratosphereHelpers.environment.is_ams? ||
+       StratosphereHelpers.environment.target_firmware.numeric >= 201392178 then
+      # no smhax
+      it "replies to GetService with 0x415" do
+        session = connect
+        expect(
+          session.send_message_sync(
+            kernel,
+            Lakebed::CMIF::Message.build_rq(1) do
+              u64("fsp-srv\x00".unpack("Q<")[0])
+            end)).to reply_with_error(0x415)
+      end
+    else
+      it "does not reply to GetService for a service that has not been registered" do
+        session = connect
+        session.send_message(
+          Lakebed::CMIF::Message.build_rq(1) do
+            u64("fsp-srv\x00".unpack("Q<")[0])
+          end) do
+          fail "should not reply..."
+        end
+        kernel.continue
+      end
     end
-    kernel.continue
   end
 
   #it "replies to GetService for sm:m" do
