@@ -1,0 +1,21 @@
+PATH
+  remote: lakebed
+  specs:
+    lakebed (0.1.0)
+      lz4-ruby
+      unicorn-engine
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    lz4-ruby (0.3.3)
+    unicorn-engine (1.0.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  lakebed!
+
+BUNDLED WITH
+   2.0.1
