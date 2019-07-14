@@ -9,7 +9,7 @@ RSpec.describe "sm" do
   before do
     load_module("sm").start
   end
-  
+
   it "reaches startup without crashing" do
     kernel.continue
   end
@@ -30,7 +30,7 @@ RSpec.describe "sm" do
       kernel,
       Lakebed::CMIF::Message.build_rq(INITIALIZE) do
         pid(send_pid)
-      end)).to reply_with_error(0)
+      end)).to reply_ok
   end
 
   def service_name(name)
@@ -42,7 +42,7 @@ RSpec.describe "sm" do
       kernel,
       Lakebed::CMIF::Message.build_rq(INITIALIZE) do
         pid(send_pid)
-      end)).to reply_with_error(0)
+      end)).to reply_ok
   end
 
   def service_name(name)
@@ -99,14 +99,14 @@ RSpec.describe "sm" do
       it "is vulnerable to smhax" do
         session = connect
         name = service_name("sm:m")
-        session.send_message(
+        fields = session.send_message_sync(
+          kernel,
           Lakebed::CMIF::Message.build_rq(1) do
             u64(name)
-          end) do
-          sess = move_handles[0]
-          expect(sess).to be_a(Lakebed::CMIF::Session::Client)
+          end) do |r|
+          move_handle(:sess)
         end
-        kernel.continue
+        expect(fields[:sess]).to be_a(Lakebed::HIPC::Session::Client)
       end
     end
   end
@@ -121,6 +121,6 @@ RSpec.describe "sm" do
         kernel,
         Lakebed::CMIF::Message.build_rq(1) do
           u64(name)
-        end)).to reply_with_error(0)
+        end)).to reply_ok
   end
 end
