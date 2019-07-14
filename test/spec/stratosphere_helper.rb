@@ -81,18 +81,22 @@ module StratosphereHelpers
   end
 
   def load_module(name)
-    p = Lakebed::Process.new(kernel)
-    path = ENV["KIP_PATH"]
-    if !path then
-      if environment.is_ams? then
-        path = "../stratosphere/#{name}/#{name}.kip"
-      else
-        path = "nintendo/#{environment.target_firmware.numeric}/#{name}.kip"
+    @@modules||= {}
+    if !@@modules[name] then
+      path = ENV["KIP_PATH"]
+      if !path then
+        if environment.is_ams? then
+          path = "../stratosphere/#{name}/#{name}.kip"
+        else
+          path = "nintendo/#{environment.target_firmware.numeric}/#{name}.kip"
+        end
+      end
+      @@modules[name] = File.open(path) do |f|
+        Lakebed::Files::Kip.from_file(f)
       end
     end
-    File.open(path) do |f|
-      p.add_nso(Lakebed::Files::Kip.from_file(f))
-    end
+    p = Lakebed::Process.new(kernel)
+    p.add_nso(@@modules[name])
     p
   end
 end
