@@ -14,17 +14,27 @@ RSpec.describe "sm" do
     kernel.continue
   end
 
-  def connect
+  def connect(require_accept=true)
     session = nil
     kernel.continue
-    kernel.named_ports["sm:"].client.connect do |sess|
-      session = Lakebed::CMIF::ClientSessionObject.new(sess)
+    session = kernel.named_ports["sm:"].connect
+    if require_accept then
+      kernel.continue
+      expect(session.accepted).to be_truthy
     end
-    kernel.continue
+    Lakebed::CMIF::ClientSessionObject.new(session.client)
+  end
 
-    expect(session).not_to be_nil
+  def sm_initialize(session, send_pid)
+    expect(session.send_message_sync(
+      kernel,
+      Lakebed::CMIF::Message.build_rq(INITIALIZE) do
+        pid(send_pid)
+      end)).to reply_with_error(0)
+  end
 
-    session
+  def service_name(name)
+    name.ljust(8, 0.chr).unpack("Q<")[0]
   end
 
   def sm_initialize(session, send_pid)
