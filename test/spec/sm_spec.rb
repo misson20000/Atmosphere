@@ -1,16 +1,22 @@
 require "lakebed"
 
 RSpec.describe "sm" do
+  INITIALIZE = 0
+  GET_SERVICE = 1
+  REGISTER_SERVICE = 2
+  UNREGISTER_SERVICE = 3
+  
   before do
     load_module("sm").start
-    kernel.continue
   end
   
   it "reaches startup without crashing" do
+    kernel.continue
   end
 
   def connect
     session = nil
+    kernel.continue
     kernel.named_ports["sm:"].client.connect do |sess|
       session = Lakebed::CMIF::ClientSessionObject.new(sess)
     end
@@ -20,55 +26,91 @@ RSpec.describe "sm" do
 
     session
   end
+
+  def sm_initialize(session, send_pid)
+    expect(session.send_message_sync(
+      kernel,
+      Lakebed::CMIF::Message.build_rq(INITIALIZE) do
+        pid(send_pid)
+      end)).to reply_with_error(0)
+  end
+
+  def service_name(name)
+    name.ljust(8, 0.chr).unpack("Q<")[0]
+  end
   
   it "accepts connections to sm:" do
     connect
   end
 
   it "responds to Initialize" do
-    session = connect
-    session.send_message_sync(
-      kernel,
-      Lakebed::CMIF::Message.build_rq(0) do
-        pid 0
-      end).unpack do
-    end
+    sm_initialize(connect, 0)
   end
-
+  
   describe "without initialization" do
     if StratosphereHelpers.environment.is_ams? ||
        StratosphereHelpers.environment.target_firmware.numeric >= 201392178 then
       # no smhax
       it "replies to GetService with 0x415" do
         session = connect
+        name = service_name("blabla")
         expect(
           session.send_message_sync(
             kernel,
-            Lakebed::CMIF::Message.build_rq(1) do
-              u64("fsp-srv\x00".unpack("Q<")[0])
+            Lakebed::CMIF::Message.build_rq(GET_SERVICE) do
+              u64(name)
+            end)).to reply_with_error(0x415)
+      end
+
+      it "replies to RegisterService with 0x415" do
+        session = connect
+        name = service_name("blabla")
+        expect(
+          session.send_message_sync(
+            kernel,
+            Lakebed::CMIF::Message.build_rq(REGISTER_SERVICE) do
+              u64(name)
+              u32(0)
+              u8(0)
+            end)).to reply_with_error(0x415)
+      end
+
+      it "replies to UnregisterService with 0x415" do
+        session = connect
+        name = service_name("blabla")
+        expect(
+          session.send_message_sync(
+            kernel,
+            Lakebed::CMIF::Message.build_rq(UNREGISTER_SERVICE) do
+              u64(name)
             end)).to reply_with_error(0x415)
       end
     else
-      it "does not reply to GetService for a service that has not been registered" do
+      it "is vulnerable to smhax" do
         session = connect
+        name = service_name("sm:m")
         session.send_message(
           Lakebed::CMIF::Message.build_rq(1) do
-            u64("fsp-srv\x00".unpack("Q<")[0])
+            u64(name)
           end) do
-          fail "should not reply..."
+          sess = move_handles[0]
+          expect(sess).to be_a(Lakebed::CMIF::Session::Client)
         end
         kernel.continue
       end
     end
   end
 
-  #it "replies to GetService for sm:m" do
-  #  session = connect
-  #  expect(
-  #    session.send_message_sync(
-  #      kernel,
-  #      Lakebed::CMIF::Message.build_rq(1) do
-  #        u64("sm:m\x00\x00\x00\x00".unpack("Q<")[0])
-  #      end))
-  #end
+  it "replies to GetService for sm:m" do
+    session = connect
+    sm_initialize(session, 1)
+    name = service_name("sm:m")
+    
+    expect(
+      session.send_message_sync(
+        kernel,
+        Lakebed::CMIF::Message.build_rq(1) do
+          u64(name)
+        end)).to reply_with_error(0)
+  end
 end
