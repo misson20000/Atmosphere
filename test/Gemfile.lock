@@ -2,13 +2,30 @@ PATH
   remote: lakebed
   specs:
     lakebed (0.1.0)
+      hexdump (~> 0.2.3)
       lz4-ruby
+      rspec (~> 3.0)
       unicorn-engine
 
 GEM
   remote: https://rubygems.org/
   specs:
+    diff-lcs (1.3)
+    hexdump (0.2.3)
     lz4-ruby (0.3.3)
+    rspec (3.8.0)
+      rspec-core (~> 3.8.0)
+      rspec-expectations (~> 3.8.0)
+      rspec-mocks (~> 3.8.0)
+    rspec-core (3.8.1)
+      rspec-support (~> 3.8.0)
+    rspec-expectations (3.8.4)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.8.0)
+    rspec-mocks (3.8.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.8.0)
+    rspec-support (3.8.2)
     unicorn-engine (1.0.1)
 
 PLATFORMS
