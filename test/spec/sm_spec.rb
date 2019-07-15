@@ -75,6 +75,10 @@ RSpec.describe "sm" do
     connect
   end
 
+  it "closes connections properly" do
+    connect.close_sync(kernel)
+  end
+  
   it "responds to Initialize" do
     sm_initialize(connect, 0)
   end
