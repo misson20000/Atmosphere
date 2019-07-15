@@ -155,9 +155,9 @@ RSpec.describe "sm" do
       it "works" do
         session = connect
         sm_initialize(session, 1)
-        port = sm_register_service(session, "hello", false, 32)
-        expect(port.port.max_sessions).to eq(32)
-        expect(port.is_signaled?).to be_falsey
+        server_port = sm_register_service(session, "hello", false, 32)
+        expect(server_port.port.max_sessions).to eq(32)
+        expect(server_port.is_signaled?).to be_falsey
       end
 
       it "fails with 0x815 if the service is already registered" do
@@ -178,13 +178,13 @@ RSpec.describe "sm" do
       it "signals the server port when someone connects" do
         session = connect
         sm_initialize(session, 1)
-        port = sm_register_service(session, "hello", false, 32)
-        expect(port.port.max_sessions).to eq(32)
-        expect(port.is_signaled?).to be_falsey
+        server_port = sm_register_service(session, "hello", false, 32)
+        expect(server_port.port.max_sessions).to eq(32)
+        expect(server_port.is_signaled?).to be_falsey
 
         cl = sm_get_service(session, "hello")
-        expect(port.is_signaled?).to be_truthy
-        expect(port.accept.session).to eq(cl.session)
+        expect(server_port.is_signaled?).to be_truthy
+        expect(server_port.accept.session).to eq(cl.session)
       end
       
       it "resumes deferred GetService requests" do
@@ -211,10 +211,10 @@ RSpec.describe "sm" do
         kernel.continue
 
         should_respond = true
-        port = sm_register_service(session1, "hello", false, 32)
-        expect(port.is_signaled?).to be_truthy
+        server_port = sm_register_service(session1, "hello", false, 32)
+        expect(server_port.is_signaled?).to be_truthy
         expect(client_session).not_to be_nil
-        expect(port.accept.session).to eq(client_session.session)
+        expect(server_port.accept.session).to eq(client_session.session)
       end
     end
 
@@ -253,6 +253,51 @@ RSpec.describe "sm" do
               u64(name)
             end)).to reply_with_error(0xe15)
       end
+    end
+
+    if StratosphereHelpers.environment.is_ams? then
+      it "enforces a minimum session limit of 8" do
+        session = connect
+        sm_initialize(session, 1)
+        server_port = sm_register_service(session, "hello", false, 2)
+        expect(server_port.port.max_sessions).to eq(8)
+        expect(server_port.is_signaled?).to be_falsey
+      end
+    end
+    
+    it "limits service connections correctly (0x615 on max sessions reached)" do
+      session = connect
+      sm_initialize(session, 1)
+      server_port = sm_register_service(session, "hello", false, 8)
+      expect(server_port.port.max_sessions).to eq(8)
+      expect(server_port.is_signaled?).to be_falsey
+      
+      sessions = 8.times.map do
+        client_side = sm_get_service(session, "hello")
+        expect(server_port.is_signaled?).to be_truthy
+        server_side = server_port.accept
+        expect(server_side.session).to eq(client_side.session)
+        [server_side, client_side]
+      end
+
+      # ninth should fail
+      name = service_name("hello")
+      kernel.strict_svcs = false # let 0xe01 hit SM
+      expect(
+        session.send_message_sync(
+          kernel,
+          Lakebed::CMIF::Message.build_rq(GET_SERVICE) do
+            u64(name)
+          end)).to reply_with_error(0x615)
+      kernel.strict_svcs = true
+
+      # close some sessions and try it again
+      sessions.each do |s|
+        s[0].close
+        s[1].close
+      end
+
+      sm_get_service(session, "hello")
     end
   end
 end

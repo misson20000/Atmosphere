@@ -71,11 +71,13 @@ module StratosphereHelpers
   end
   
   def kernel
-    @kernel||= Lakebed::Kernel.new(environment)
-    if ENV["STRICT_SVCS"] then
-      @kernel.strict_svcs = ENV["STRICT_SVCS"] == "1"
-    else
-      @kernel.strict_svcs = true
+    if !@kernel then
+      @kernel = Lakebed::Kernel.new(environment)
+      if ENV["STRICT_SVCS"] then
+        @kernel.strict_svcs = ENV["STRICT_SVCS"] == "1"
+      else
+        @kernel.strict_svcs = true
+      end
     end
     @kernel
   end
