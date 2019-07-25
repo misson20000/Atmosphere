@@ -97,7 +97,7 @@ module StratosphereHelpers
         Lakebed::Files::Kip.from_file(f)
       end
     end
-    p = Lakebed::Process.new(kernel)
+    p = Lakebed::Process.new(kernel, {:name => name})
     p.add_nso(@@modules[name])
     p
   end
