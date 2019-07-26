@@ -82,24 +82,39 @@ module StratosphereHelpers
     @kernel
   end
 
+  class DummyHLE
+    def start
+    end
+  end
+  
   def load_module(name)
-    @@modules||= {}
-    if !@@modules[name] then
-      path = ENV["KIP_PATH"]
-      if !path then
-        if environment.is_ams? then
-          path = "../stratosphere/#{name}/#{name}.kip"
-        else
-          path = "nintendo/#{environment.target_firmware.numeric}/#{name}.kip"
+    if ENV["HLE_TEST"] == "1" then
+      case name
+      when "sm"
+        kernel.load_hle_module(Lakebed::HLE::ServiceManager)
+      else
+        raise "unknown HLE module #{name}"
+      end
+      return DummyHLE.new
+    else
+      @@modules||= {}
+      if !@@modules[name] then
+        path = ENV["KIP_PATH"]
+        if !path then
+          if environment.is_ams? then
+            path = "../stratosphere/#{name}/#{name}.kip"
+          else
+            path = "nintendo/#{environment.target_firmware.numeric}/#{name}.kip"
+          end
+        end
+        @@modules[name] = File.open(path) do |f|
+          Lakebed::Files::Kip.from_file(f)
         end
       end
-      @@modules[name] = File.open(path) do |f|
-        Lakebed::Files::Kip.from_file(f)
-      end
+      p = Lakebed::Process.new(kernel, {:name => name})
+      p.add_nso(@@modules[name])
+      p
     end
-    p = Lakebed::Process.new(kernel, {:name => name})
-    p.add_nso(@@modules[name])
-    p
   end
 end
 
