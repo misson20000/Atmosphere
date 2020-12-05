@@ -14,6 +14,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mesosphere/kern_build_config.hpp>
+
+#if defined(MESOSPHERE_ENABLE_SINGLE_STEP)
+    .macro disable_single_step, scratch
+    /* Clear MDSCR_EL1.SS. */
+    mrs \scratch, mdscr_el1
+    bic \scratch, \scratch, #1
+    msr mdscr_el1, \scratch
+    .endm
+
+    .macro check_enable_single_step, scratch1, scratch2, spsr_value
+    /* Check if single-step is requested. */
+    ldrb    \scratch1, [sp, #(0x120 + 0x17)]
+    tbz     \scratch1, #0, .skip_single_step\@
+
+    /* If single-step is requested, enable the single-step machine by setting MDSCR_EL1.SS. */
+    mrs     \scratch2, mdscr_el1
+    orr     \scratch2, \scratch2, #1
+    msr     mdscr_el1, \scratch2
+
+    /* Since we're returning from an exception, set SPSR.SS so we actually advance an instruction. */
+    orr \spsr_value, \spsr_value, #(1 << 21)
+
+    isb
+
+.skip_single_step\@:
+    .endm
+#else
+    .macro disable_single_step, scratch
+    .endm
+
+    .macro check_enable_single_step, scratch1, scratch2, spsr_value
+    .endm
+#endif
+	
 /* ams::kern::svc::CallReturnFromException64(Result result) */
 .section    .text._ZN3ams4kern3svc25CallReturnFromException64Ev, "ax", %progbits
 .global     _ZN3ams4kern3svc25CallReturnFromException64Ev
@@ -88,6 +123,9 @@ _ZN3ams4kern3svc14RestoreContextEm:
     ldp     x30, x8,  [sp, #(8 * 30)]
     ldp     x9,  x10, [sp, #(8 * 32)]
     ldr     x11,      [sp, #(8 * 34)]
+
+    check_enable_single_step w0, x0, x10
+
     msr     sp_el0, x8
     msr     elr_el1, x9
     msr     spsr_el1, x10

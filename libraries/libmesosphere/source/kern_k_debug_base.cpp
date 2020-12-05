@@ -598,6 +598,7 @@ namespace ams::kern {
             const bool exception_handled = (m_continue_flags & ams::svc::ContinueFlag_ExceptionHandled) != 0;
             const bool continue_all      = (m_continue_flags & ams::svc::ContinueFlag_ContinueAll)      != 0;
             const bool continue_others   = (m_continue_flags & ams::svc::ContinueFlag_ContinueOthers)   != 0;
+            const bool single_step       = (m_continue_flags & ams::svc::ContinueFlag_SingleStep)       != 0;
 
             /* Update each thread. */
             auto end = target->GetThreadList().end();
@@ -635,6 +636,9 @@ namespace ams::kern {
                 if (should_continue) {
                     if (exception_handled) {
                         it->SetDebugExceptionResult(svc::ResultStopProcessingException());
+                    }
+                    if (single_step) {
+                        it->SetSingleStep();
                     }
                     it->Resume(KThread::SuspendType_Debug);
                 }
@@ -950,6 +954,7 @@ namespace ams::kern {
                                 for (auto it = process->GetThreadList().begin(); it != end; ++it) {
                                     if (resume) {
                                         /* If the process isn't crashed, resume threads. */
+                                        it->ClearSingleStep();
                                         it->Resume(KThread::SuspendType_Debug);
                                     } else {
                                         /* Otherwise, suspend them. */
@@ -1032,9 +1037,10 @@ namespace ams::kern {
             /* Set the process as breaked. */
             process->SetDebugBreak();
 
-            /* If the event is an exception, set the result. */
+            /* If the event is an exception, set the result and clear single step. */
             if (event == ams::svc::DebugEvent_Exception) {
                 GetCurrentThread().SetDebugExceptionResult(ResultSuccess());
+                GetCurrentThread().ClearSingleStep();
             }
 
             /* Exit our retry loop. */

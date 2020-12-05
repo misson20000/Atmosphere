@@ -173,8 +173,9 @@ namespace ams::svc {
     };
 
     enum MesosphereMetaInfo : u64 {
-        MesosphereMetaInfo_KernelVersion   = 0,
-        MesosphereMetaInfo_IsKTraceEnabled = 1,
+        MesosphereMetaInfo_KernelVersion       = 0,
+        MesosphereMetaInfo_IsKTraceEnabled     = 1,
+        MesosphereMetaInfo_IsSingleStepEnabled = 2,
     };
 
     enum SystemInfoType : u32 {
@@ -306,7 +307,10 @@ namespace ams::svc {
         ContinueFlag_ContinueAll          = (1u << 2),
         ContinueFlag_ContinueOthers       = (1u << 3),
 
-        ContinueFlag_AllMask              = (1u << 4) - 1,
+        /* NOTE: Atmosphere Extension; check MesosphereMetaInfo_IsSingleStepEnabled before using. */
+        ContinueFlag_SingleStep           = (1u << 30),
+
+        ContinueFlag_AllMask              = ((1u << 4) - 1) | ContinueFlag_SingleStep,
     };
 
     enum ThreadExitReason : u32 {

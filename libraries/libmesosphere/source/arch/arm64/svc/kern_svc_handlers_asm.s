@@ -15,6 +15,39 @@
  */
 #include <mesosphere/kern_build_config.hpp>
 
+#if defined(MESOSPHERE_ENABLE_SINGLE_STEP)
+    .macro disable_single_step, scratch
+    /* Clear MDSCR_EL1.SS. */
+    mrs \scratch, mdscr_el1
+    bic \scratch, \scratch, #1
+    msr mdscr_el1, \scratch
+    .endm
+
+    .macro check_enable_single_step, scratch1, scratch2, spsr_value
+    /* Check if single-step is requested. */
+    ldrb    \scratch1, [sp, #(0x120 + 0x17)]
+    tbz     \scratch1, #0, .skip_single_step\@
+
+    /* If single-step is requested, enable the single-step machine by setting MDSCR_EL1.SS. */
+    mrs     \scratch2, mdscr_el1
+    orr     \scratch2, \scratch2, #1
+    msr     mdscr_el1, \scratch2
+
+    /* Since we're returning from an SVC, make sure SPSR.SS is cleared so we break instantly on the instruction after the SVC. */
+    bic \spsr_value, \spsr_value, #(1 << 21)
+
+    isb
+
+.skip_single_step\@:
+    .endm
+#else
+    .macro disable_single_step, scratch
+    .endm
+
+    .macro check_enable_single_step, scratch1, scratch2, spsr_value
+    .endm
+#endif
+
 /* ams::kern::arch::arm64::SvcHandler64() */
 .section    .text._ZN3ams4kern4arch5arm6412SvcHandler64Ev, "ax", %progbits
 .global     _ZN3ams4kern4arch5arm6412SvcHandler64Ev
@@ -50,6 +83,8 @@ _ZN3ams4kern4arch5arm6412SvcHandler64Ev:
     stp     x8,  x9,  [sp, #(8 * 31)]
     stp     x10, x11, [sp, #(8 * 33)]
 
+    disable_single_step x8
+	
     /* Check if the SVC index is out of range. */
     mrs     x8, esr_el1
     and     x8, x8, #0xFF
@@ -153,6 +188,9 @@ _ZN3ams4kern4arch5arm6412SvcHandler64Ev:
     ldp     x30, x8,  [sp, #(8 * 30)]
     ldp     x9,  x10, [sp, #(8 * 32)]
     ldr     x11,      [sp, #(8 * 34)]
+
+    check_enable_single_step w0, x0, x10
+
     msr     sp_el0, x8
     msr     elr_el1, x9
     msr     spsr_el1, x10
@@ -202,6 +240,9 @@ _ZN3ams4kern4arch5arm6412SvcHandler64Ev:
     ldp     x9,  x10, [sp, #(8 * 32)]
     ldr     x11,      [sp, #(8 * 34)]
     ldr     x18,      [sp, #(8 * 18)]
+
+    check_enable_single_step w12, x12, x10
+
     msr     sp_el0, x8
     msr     elr_el1, x9
     msr     spsr_el1, x10
@@ -259,6 +300,8 @@ _ZN3ams4kern4arch5arm6412SvcHandler32Ev:
     stp     x12, x13, [sp, #(8 * 12)]
     stp     x14, xzr, [sp, #(8 * 14)]
 
+    disable_single_step x8
+	
     /* Check if the SVC index is out of range. */
     mrs     x16, esr_el1
     and     x16, x16, #0xFF
@@ -358,6 +401,9 @@ _ZN3ams4kern4arch5arm6412SvcHandler32Ev:
     /* Restore registers. */
     ldp     x17, x20, [sp, #(8 * 32)]
     ldr     x19,      [sp, #(8 * 34)]
+
+    check_enable_single_step w0, x0, x20
+
     msr     elr_el1, x17
     msr     spsr_el1, x20
     msr     tpidr_el0, x19
@@ -401,6 +447,9 @@ _ZN3ams4kern4arch5arm6412SvcHandler32Ev:
     ldp     x14, xzr, [sp, #(8 * 14)]
     ldp     x17, x20, [sp, #(8 * 32)]
     ldr     x19,      [sp, #(8 * 34)]
+
+    check_enable_single_step w21, x21, x20
+
     msr     elr_el1, x17
     msr     spsr_el1, x20
     msr     tpidr_el0, x19

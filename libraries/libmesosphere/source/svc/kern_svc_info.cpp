@@ -271,6 +271,17 @@ namespace ams::kern::svc {
                                     *out = KTraceValue;
                                 }
                                 break;
+                            case ams::svc::MesosphereMetaInfo_IsSingleStepEnabled:
+                                {
+                                    /* Return whether the kernel supports single step. */
+#if defined(MESOSPHERE_ENABLE_SINGLE_STEP)
+                                    constexpr u64 SingleStepValue = 1;
+#else
+                                    constexpr u64 SingleStepValue = 0;
+#endif
+                                    *out = SingleStepValue;
+                                }
+                                break;
                             default:
                                 return svc::ResultInvalidCombination();
                         }

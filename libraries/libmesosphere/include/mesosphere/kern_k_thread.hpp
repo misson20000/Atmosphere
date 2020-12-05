@@ -88,11 +88,24 @@ namespace ams::kern {
                 bool is_calling_svc;
                 bool is_in_exception_handler;
                 bool is_pinned;
+                u8 _pad[2];
+                bool single_step; /* Atmosphere extension */
                 s32 disable_count;
                 KThreadContext *context;
                 KThread *cur_thread;
             };
             static_assert(alignof(StackParameters) == 0x10);
+
+            /* These offsets are hardcoded in assembly and need extra attention if they change. */
+            static_assert(offsetof(StackParameters, dpc_flags) == 0x10);
+            static_assert(offsetof(StackParameters, current_svc_id) == 0x11);
+            static_assert(offsetof(StackParameters, is_calling_svc) == 0x12);
+            static_assert(offsetof(StackParameters, is_in_exception_handler) == 0x13);
+            static_assert(offsetof(StackParameters, is_pinned) == 0x14);
+            static_assert(offsetof(StackParameters, single_step) == 0x17);
+            static_assert(offsetof(StackParameters, disable_count) == 0x18);
+            static_assert(offsetof(StackParameters, context) == 0x20);
+            static_assert(offsetof(StackParameters, cur_thread) == 0x28);
 
             struct QueueEntry {
                 private:
@@ -309,6 +322,22 @@ namespace ams::kern {
             ALWAYS_INLINE u8 GetSvcId() const {
                 MESOSPHERE_ASSERT_THIS();
                 return this->GetStackParameters().current_svc_id;
+            }
+
+            /* Atmosphere extension. */
+            ALWAYS_INLINE void SetSingleStep() {
+                MESOSPHERE_ASSERT_THIS();
+                this->GetStackParameters().single_step = true;
+            }
+
+            ALWAYS_INLINE void ClearSingleStep() {
+                MESOSPHERE_ASSERT_THIS();
+                this->GetStackParameters().single_step = false;
+            }
+
+            ALWAYS_INLINE bool WillSingleStep() {
+                MESOSPHERE_ASSERT_THIS();
+                return this->GetStackParameters().single_step;
             }
 
             ALWAYS_INLINE void RegisterDpc(DpcFlag flag) {
